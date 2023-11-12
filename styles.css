@@ -1,0 +1,67 @@
+/*
+
+This CSS file will be included with your plugin, and
+available in the app when your plugin is enabled.
+
+If your plugin does not need CSS, delete this file.
+
+*/
+
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.chat-message-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+.chat-message-container > h2 {
+    width: 100%;
+    text-align: center;
+}
+
+.messages {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.message {
+    display: flex;
+    flex-direction: column;
+    flex-grow: 1;
+    gap: 2px;
+    padding: 0.5em 1em;
+    background: var(--background-primary);
+}
+
+.message span:first-child {
+    font-weight: bold;
+}
+.message span:nth-child(2) {
+    margin-left: 1em;
+}
+
+.input-container {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+.input-container > textarea {
+    background: var(--background-primary);
+    padding: 1em 1em;
+}
+
+.submit-container {
+    display: flex;
+    justify-content: end;
+    margin-top: 1em;
+    gap: 12px;
+}
+.submit-container > button.add-to-chat {
+    min-width: 100px;
+}
+  
