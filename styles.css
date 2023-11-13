@@ -11,16 +11,32 @@ If your plugin does not need CSS, delete this file.
     display: flex;
     flex-direction: column;
     height: 100%;
+    margin: 0;
 }
 
 .chat-message-container {
     display: flex;
     flex-direction: column;
     height: 100%;
+    overflow-y: scroll;
 }
-.chat-message-container > h2 {
+.chat-container > h2 {
     width: 100%;
     text-align: center;
+    margin: 0 0 0.5em 0;
+}
+
+.settings {
+    background-color: var(--background-secondary);
+    border-radius: 8px;
+    padding: 0.5em 1em;
+    margin-bottom: 0.5em;
+}
+
+.settings .setting-web-search {
+    display: flex;
+    align-items: center;
+    gap: 12px;
 }
 
 .messages {
@@ -34,21 +50,34 @@ If your plugin does not need CSS, delete this file.
     flex-direction: column;
     flex-grow: 1;
     gap: 2px;
-    padding: 0.5em 1em;
+    padding: 0.5em 1em 0.5em 1em;
     background: var(--background-primary);
 }
 
 .message span:first-child {
     font-weight: bold;
 }
-.message span:nth-child(2) {
+.message > div {
+    margin: 0;
+}
+.message > div > p:first-child {
+    margin: 0;
+}
+.message :nth-child(2) {
     margin-left: 1em;
+}
+
+.message[data-success=false] {
+    background-color: rgb(94, 0, 0);
 }
 
 .input-container {
     display: flex;
     flex-direction: column;
     width: 100%;
+    margin-bottom: 2em;
+    margin-top: 1em;
+    overflow-wrap: break-word;
 }
 .input-container > textarea {
     background: var(--background-primary);
