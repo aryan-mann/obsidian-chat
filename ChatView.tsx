@@ -11,20 +11,26 @@ export const ChatViewComponent = () => {
     const settings = React.useContext(SettingsContext);
     const app = React.useContext(AppContext);
 
-    const co = React.useMemo(() => {
+    /*const co = React.useMemo(() => {
         return new CohereClient({
             token: settings?.ApiKey || '',
         });
-    }, [settings?.ApiKey])
+    }, [settings?.ApiKey])*/
 
-    const [messages, setMessages] = React.useState<Array<ChatMessage>>([STARTING_CHAT_TURN,])
+    const [messages, setMessages] = React.useState<Array<ChatMessage>>([
+		STARTING_CHAT_TURN,
+		//{ role: "SYSTEM", "message": "I am saying something blah", in_history: false },
+		//{ role: "USER", "message": "can you find my sock", in_history: true },
+	])
     const [userMessage, setUserMessage] = React.useState<string>("");
     const [connectors, setConnectors] = React.useState<ConnectorSettings>({ web_search: false });
     const [isStreaming, setIsStreaming] = React.useState<boolean>(false);
 
     async function sendMessage() {
-        if (isStreaming)
+        if (isStreaming){
+			new Notice('Still receiving a message from Coral', 2000)
             return;
+		}
 
         const message: string = userMessage;
         setIsStreaming(true);
@@ -42,51 +48,63 @@ export const ChatViewComponent = () => {
         let fullData = 'The user is asking questions about the following files';
         let i = 1;
 
-        let usedDocs: string[] = [];
+        let usedDocs: Set<string> = new Set([]);
         for (const markdownLeaf of app.workspace.getLeavesOfType("markdown")) {
             // should select it?
+			// @ts-ignore
             if (!(markdownLeaf.view.currentMode?.isVisible === true)) {
                 continue;
             }
 
             // @ts-ignore
             const fileName: string = markdownLeaf.view.file?.basename || 'File';
+			if (usedDocs.has(fileName)) {
+				continue;
+			}
+
             // @ts-ignore
             const data: string = markdownLeaf.view.data || '';
             if (data && typeof(data) === "string") {
                 fullData += `\n----- FILE ${i}: ${fileName} --------\n${data}`;
             }
-            usedDocs.push(fileName);
-            console.log(markdownLeaf);
+            usedDocs.add(fileName);
             i += 1;
         }
         // execution
 
         // when web search is off, add local documents to the history
-        if (!connectors.web_search) {
-            setMessages(msgs => [
-                ...msgs,
-                { role: "USER", message: userMessage, success: true, in_history: true }
-            ])
-        }
+        setMessages(msgs => [
+            ...msgs,
+            { role: "USER", message: userMessage, success: true, in_history: true }
+        ])
         setUserMessage("");
 
         // TODO: Get the value of the current document from the active editor view
 
         // console.log(currentDoc);
         const augumented_history: Array<ChatMessage> = [
-            ...(messages.filter((x) => x.in_history)),
-            { role: "CHATBOT", message: fullData, in_history: true }
+            ...(messages.filter((x) => x.in_history && x.role !== "SYSTEM")),
         ];
+
+		// If not searching the web, use local files as history
+		if (!connectors.web_search) {
+            augumented_history.push({
+				role: "CHATBOT", message: fullData, in_history: true 
+			});
+		}
 
         let localConnectors: Array<any> = [];
         if (connectors.web_search) {
             localConnectors.push({ id: 'web-search' })
         }
 
-        if (usedDocs.length > 0) {
-            let docCtx = usedDocs.reduce((p, c) => `${p}${c},`, '');
-            new Notice(`Using context: ${docCtx.substring(0, docCtx.length-1)}`)
+        if (usedDocs.size > 0 && !connectors.web_search) {
+            let docCtx = Array.from(usedDocs).reduce((p, c) => `${p}${c}, `, '');
+			docCtx = docCtx.substring(0, docCtx.length-1);
+			setMessages(msgs => [
+				...msgs,
+				{ role: "SYSTEM", message: `Local Context: ${docCtx}`, in_history: false }
+			])
         }
 
         try {
@@ -109,7 +127,7 @@ export const ChatViewComponent = () => {
                 return;
             }
             
-            setMessages(msgs => [...msgs, { role: "CHATBOT", message: "", in_history: false }])
+            setMessages(msgs => [...msgs, { role: "CHATBOT", message: "Thinking...", in_history: false }])
             const reader = response.body.pipeThrough(new TextDecoderStream()).getReader();
             let streamEnded = false;
             let streamingMessage = '';
@@ -133,12 +151,14 @@ export const ChatViewComponent = () => {
                                 ])
                                 break;
                             }
+							case "stream-end":
+								setIsStreaming(false);
                         }
                     }
                     catch (e) { /* empty */ }
                 }
             }
-
+			setIsStreaming(false)
         } catch (err) {
             if (settings?.ApiKey.trim() === '') {
                 err = 'API key is empty.'
@@ -155,19 +175,12 @@ export const ChatViewComponent = () => {
     function resetChat() {
         new Notice('Cleared chat history', 2000);
         setMessages([STARTING_CHAT_TURN])
+		setIsStreaming(false)
     }
 
     return (
         <div className="chat-container">
             <h2>Chat with Coral</h2>
-            <div className='settings'>
-                <div className='setting-web-search'>
-                    <label htmlFor='use-web-search'>Search the Web</label>
-                    <input checked={connectors.web_search} onChange={(e) => {
-                        setConnectors(c => ({...c, web_search: e.target.checked}))
-                    }} id='use-web-search' type="checkbox" />
-                </div>
-            </div>
             <div className="chat-message-container">
                 <div className='messages'>
                     {messages.map((m, i) => (
@@ -182,6 +195,14 @@ export const ChatViewComponent = () => {
                     ))}
                 </div>
             </div>
+			<div className='settings'>
+                <div className='setting-web-search'>
+                    <label htmlFor='use-web-search'>Search the Web</label>
+                    <input checked={connectors.web_search} onChange={(e) => {
+                        setConnectors(c => ({...c, web_search: e.target.checked}))
+                    }} id='use-web-search' type="checkbox" />
+			    </div>
+            </div>
             <div className='input-container'>
                 <textarea value={userMessage} 
                     onChange={(e) => {
@@ -193,7 +214,7 @@ export const ChatViewComponent = () => {
                             e.preventDefault();
                         }
                     }}
-                    style={{ minHeight: '100px' }} placeholder='Summarize this page..' 
+                    style={{ minHeight: '100px' }} placeholder='Help me think about my notes.' 
                 />
                 <div className='submit-container'>
                     <button disabled={isStreaming} className='add-to-chat' onClick={sendMessage}>

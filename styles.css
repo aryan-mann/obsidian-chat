@@ -6,6 +6,9 @@ available in the app when your plugin is enabled.
 If your plugin does not need CSS, delete this file.
 
 */
+.workspace-leaf-content[data-type="example-view"] {
+	background: var(--color-base-00);
+}
 
 .chat-container {
     display: flex;
@@ -18,7 +21,8 @@ If your plugin does not need CSS, delete this file.
     display: flex;
     flex-direction: column;
     height: 100%;
-    overflow-y: scroll;
+    overflow-y: auto;
+	padding: 0;
 }
 .chat-container > h2 {
     width: 100%;
@@ -27,10 +31,12 @@ If your plugin does not need CSS, delete this file.
 }
 
 .settings {
-    background-color: var(--background-secondary);
+    background-color: var(--color-base-20);
+	color: var(--color-base-70);
     border-radius: 8px;
     padding: 0.5em 1em;
-    margin-bottom: 0.5em;
+    margin-top: 1em;
+	font-size: 0.8em;
 }
 
 .settings .setting-web-search {
@@ -43,6 +49,7 @@ If your plugin does not need CSS, delete this file.
     display: flex;
     flex-direction: column;
     gap: 4px;
+	user-select: text;
 }
 
 .message {
@@ -76,7 +83,7 @@ If your plugin does not need CSS, delete this file.
     flex-direction: column;
     width: 100%;
     margin-bottom: 2em;
-    margin-top: 1em;
+    margin-top: 0.25em;
     overflow-wrap: break-word;
 }
 .input-container > textarea {
@@ -93,4 +100,18 @@ If your plugin does not need CSS, delete this file.
 .submit-container > button.add-to-chat {
     min-width: 100px;
 }
-  
+
+/* ROLE SPECIFIC STYLES */
+.message[data-role="CHATBOT"] {
+	background: var(--color-base-20);
+}
+.message[data-role="SYSTEM"] {
+	background: var(--color-base-00);
+	font-size: 0.8em;
+	display: flex;
+	flex-direction: row;
+	flex-wrap: wrap;
+}
+.message[data-role="USER"] {
+	background: var(--color-base-40);
+}
