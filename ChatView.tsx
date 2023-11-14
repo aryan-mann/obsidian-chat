@@ -99,11 +99,11 @@ export const ChatViewComponent = () => {
         }
 
         if (usedDocs.size > 0 && !connectors.web_search) {
-            let docCtx = Array.from(usedDocs).reduce((p, c) => `${p}${c}, `, '');
-			docCtx = docCtx.substring(0, docCtx.length-1);
+            let docCtx = Array.from(usedDocs).reduce((p, c) => `${p}'${c}', `, '');
+			docCtx = docCtx.substring(0, docCtx.length-2);
 			setMessages(msgs => [
 				...msgs,
-				{ role: "SYSTEM", message: `Local Context: ${docCtx}`, in_history: false }
+				{ role: "SYSTEM", message: `Local context from ${docCtx}`, in_history: false }
 			])
         }
 
