@@ -70,8 +70,15 @@ If your plugin does not need CSS, delete this file.
 .message > div > p:first-child {
     margin: 0;
 }
-.message :nth-child(2) {
+.message > :nth-child(2) {
     margin-left: 1em;
+}
+
+.response p {
+    margin: 0;
+}
+.response hr {
+    margin: 0.75em 0em;
 }
 
 .message[data-success=false] {

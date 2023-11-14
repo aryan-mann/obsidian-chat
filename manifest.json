@@ -1,10 +1,10 @@
 {
-	"id": "cohere-coral",
-	"name": "Cohere Coral",
+	"id": "command-chat",
+	"name": "Command Chat",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Coral for Obsidian",
-	"author": "Cohere",
-	"authorUrl": "https://cohere.com",
+	"description": "AI Chatbot for Obsidian. Powered by Cohere Command.",
+	"author": "Aryan Mann",
+	"authorUrl": "https://aryanmann.com",
 	"isDesktopOnly": false
 }

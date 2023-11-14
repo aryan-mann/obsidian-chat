@@ -5,7 +5,7 @@ import { ChatMessage, ConnectorSettings } from './types';
 import { CohereClient, CohereError, CohereTimeoutError } from 'cohere-ai';
 import Markdown from 'react-markdown';
 
-const STARTING_CHAT_TURN: ChatMessage = { role: 'CHATBOT', message: `Hey I am **Coral**! What do you need help with?`, success: true, in_history: false };
+const STARTING_CHAT_TURN: ChatMessage = { role: 'CHATBOT', message: `Hi! How can I help you?`, success: true, in_history: false };
 
 export const ChatViewComponent = () => {
     const settings = React.useContext(SettingsContext);
@@ -37,7 +37,7 @@ export const ChatViewComponent = () => {
 
         // validation
         if (userMessage.trim().length === 0) {
-            new Notice("Your message to Coral is empty!", 2000)
+            new Notice("Your message is empty!", 2000)
             return;
         }
         if (app === undefined) {
@@ -45,7 +45,7 @@ export const ChatViewComponent = () => {
             return
         }
 
-        let fullData = 'The user is asking questions about the following files';
+        let fullData = 'The user is asking questions about the following files:';
         let i = 1;
 
         let usedDocs: Set<string> = new Set([]);
@@ -65,7 +65,7 @@ export const ChatViewComponent = () => {
             // @ts-ignore
             const data: string = markdownLeaf.view.data || '';
             if (data && typeof(data) === "string") {
-                fullData += `\n----- FILE ${i}: ${fileName} --------\n${data}`;
+                fullData += `\n----- FILE ${i}: ${fileName} -----\n${data}`;
             }
             usedDocs.add(fileName);
             i += 1;
@@ -79,9 +79,6 @@ export const ChatViewComponent = () => {
         ])
         setUserMessage("");
 
-        // TODO: Get the value of the current document from the active editor view
-
-        // console.log(currentDoc);
         const augumented_history: Array<ChatMessage> = [
             ...(messages.filter((x) => x.in_history && x.role !== "SYSTEM")),
         ];
@@ -119,9 +116,15 @@ export const ChatViewComponent = () => {
                     message: message,
                     temperature: 0.8,
                     stream: true,
-                    connectors: localConnectors
+                    connectors: localConnectors,
+                    preamble_override: `You are an assistant attached to a note-taking app called Obsidian. Users will ask you questions, to answer them, you reference their notes & files.`
                 })
             });
+            if (response.status !== 200) {
+                throw new Error(`Unable to contact Cohere. HTTP ${response.status}`)
+                return;
+            }
+
             if (response.body === null) {
                 setMessages(msgs => [...msgs, { role: "CHATBOT", message: "Unable to contact Cohere", success: false, in_history: false }])
                 return;
@@ -155,17 +158,17 @@ export const ChatViewComponent = () => {
 								setIsStreaming(false);
                         }
                     }
-                    catch (e) { /* empty */ }
+                    catch (e) { console.error(e); }
                 }
             }
 			setIsStreaming(false)
         } catch (err) {
-            if (settings?.ApiKey.trim() === '') {
+            if ((settings?.ApiKey || '').trim() === '') {
                 err = 'API key is empty.'
             }
             setMessages(msgs => [
                 ...msgs,
-                { role: "CHATBOT", message: `I was unable to respond to you.\n\n${err}`, success: false, in_history: false }
+                { role: "CHATBOT", message: `I was unable to respond to you.\n\n--------\n**${err}**`, success: false, in_history: false }
             ])
         } finally {
             setIsStreaming(false);
@@ -180,13 +183,13 @@ export const ChatViewComponent = () => {
 
     return (
         <div className="chat-container">
-            <h2>Chat with Coral</h2>
+            <h2>Command Chat</h2>
             <div className="chat-message-container">
                 <div className='messages'>
                     {messages.map((m, i) => (
                         <div className='message' data-role={m.role} data-success={m.success === undefined ? 'unknown': m.success} key={`${m.message}-${i}`}>
                             <span>{m.role}</span>
-                            <div>
+                            <div className='response'>
                                 <Markdown>
                                     {m.message}
                                 </Markdown>
@@ -210,8 +213,15 @@ export const ChatViewComponent = () => {
                     }}
                     onKeyDown={(e) => {
                         if (e.shiftKey && e.key === "Enter") {
+                            setUserMessage(msg => `${msg}\n`)
+                            e.preventDefault();
+                            return;
+                        } 
+                        
+                        if (e.key === "Enter") {
                             sendMessage();
                             e.preventDefault();
+                            return;
                         }
                     }}
                     style={{ minHeight: '100px' }} placeholder='Help me think about my notes.' 
